@@ -7,27 +7,22 @@ An [Obsidian](https://obsidian.md) plugin that renders Mermaid diagrams using th
 
 ## Why
 
-Obsidian bundles its own copy of Mermaid that lags behind the upstream releases. New diagram types, syntax improvements, and bug fixes in Mermaid aren't available until Obsidian ships an update — which can take months.
+Obsidian bundles its own copy of Mermaid that lags behind upstream releases. New diagram types, syntax improvements, and bug fixes in Mermaid aren't available until Obsidian ships an update — which can take months.
 
 This plugin solves that by loading Mermaid independently, so you always have access to the latest features.
 
 ## How it works
 
-Use ` ```mermaid-next ` code blocks instead of ` ```mermaid `.
+Use `mermaid-next` code blocks instead of `mermaid`.
 
-By default the plugin loads Mermaid from jsDelivr CDN. If the CDN is unreachable (offline use), it falls back to a bundled copy of Mermaid included in the plugin.
+By default the plugin loads Mermaid from jsDelivr CDN. If the CDN is unreachable (offline use), it falls back to a bundled copy of Mermaid included in the plugin. Diagrams are automatically themed using Obsidian's active colour scheme, including support for light and dark mode.
 
 ## Usage
 
 ````markdown
 ```mermaid-next
----
-config:
-  theme: 'dark'
----
-
 sequenceDiagram
-    participant Alice@{ "type" : "queue" }
+    participant Alice@{ shape: "queue" }
     participant Bob
     Alice->>Bob: Queue message
     Bob->>Alice: Queue response

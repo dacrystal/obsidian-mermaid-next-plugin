@@ -48,7 +48,7 @@ Search for **Mermaid Next Plugin** in Settings → Community plugins.
 
 ### Manual
 
-Copy `main.js`, `styles.css`, and `manifest.json` to your vault at `.obsidian/plugins/mermaid-next-plugin/`.
+Copy `main.js`, `styles.css`, and `manifest.json` to your vault at `.obsidian/plugins/mermaid-next/`.
 
 ## Scope
 

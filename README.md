@@ -22,7 +22,7 @@ By default the plugin loads Mermaid from jsDelivr CDN. If the CDN is unreachable
 ````markdown
 ```mermaid-next
 sequenceDiagram
-    participant Alice@{ shape: "queue" }
+    participant Alice@{ type: "queue" }
     participant Bob
     Alice->>Bob: Queue message
     Bob->>Alice: Queue response

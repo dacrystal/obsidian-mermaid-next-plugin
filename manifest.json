@@ -1,0 +1,10 @@
+{
+	"id": "mermaid-next-plugin",
+	"name": "Mermaid Next Plugin",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "An Obsidian plugin that renders Mermaid diagrams using the latest version of Mermaid.",
+	"author": "Nasser Alansari",
+	"authorUrl": "https://github.com/dacrystal",
+	"isDesktopOnly": false
+}

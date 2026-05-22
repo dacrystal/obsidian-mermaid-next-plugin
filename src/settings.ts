@@ -6,6 +6,8 @@ export interface MermaidNextPluginSettings {
 	version: string;
 	source: "cdn" | "bundled";
 	useObsidianTheme: boolean;
+	useElk: boolean;
+	useHandDrawn: boolean;
 	cdnCache: { version: string; source: string } | null;
 }
 
@@ -13,6 +15,8 @@ export const DEFAULT_SETTINGS: MermaidNextPluginSettings = {
 	version: "latest",
 	source: "bundled",
 	useObsidianTheme: true,
+	useElk: true,
+	useHandDrawn: false,
 	cdnCache: null,
 };
 
@@ -132,7 +136,7 @@ export class MermaidNextSettingTab extends PluginSettingTab {
 			});
 
 		new SettingGroup(containerEl)
-			.setHeading("Appearance")
+			.setHeading("Configuration")
 			.addSetting((set) => {
 				set.setName("Obsidian theme integration")
 					.setDesc(
@@ -146,6 +150,41 @@ export class MermaidNextSettingTab extends PluginSettingTab {
 							)
 							.onChange((value) => {
 								void this.save("useObsidianTheme", value);
+							}),
+					);
+			})
+			.addSetting((set) => {
+				/* eslint-disable obsidianmd/ui/sentence-case -- ELK is an acronym */
+				set.setName("ELK layout engine")
+					.setDesc(
+						"Uses ELK as the default layout engine. Produces better results for complex flowcharts and graphs.",
+					);
+				/* eslint-enable obsidianmd/ui/sentence-case */
+				set
+					.addToggle((toggle) =>
+						toggle
+							.setValue(
+								this.plugin.settings?.useElk ??
+									DEFAULT_SETTINGS.useElk,
+							)
+							.onChange((value) => {
+								void this.save("useElk", value);
+							}),
+					);
+			})
+			.addSetting((set) => {
+				set.setName("Hand-drawn look")
+					.setDesc(
+						"Renders diagrams with a sketched, hand-drawn style.",
+					)
+					.addToggle((toggle) =>
+						toggle
+							.setValue(
+								this.plugin.settings?.useHandDrawn ??
+									DEFAULT_SETTINGS.useHandDrawn,
+							)
+							.onChange((value) => {
+								void this.save("useHandDrawn", value);
 							}),
 					);
 			});

@@ -1,6 +1,7 @@
 import { requestUrl } from "obsidian";
 import mermaidBundled from "mermaid";
 import mermaidPkg from "mermaid/package.json";
+import elkLayoutLoaders from "@mermaid-js/layout-elk";
 
 export const bundledMermaidVersion: string = mermaidPkg.version;
 
@@ -10,14 +11,19 @@ interface MermaidAPI {
 		id: string,
 		definition: string,
 	): Promise<{ svg: string; bindFunctions?: (el: Element) => void }>;
+	registerLayoutLoaders(loaders: unknown[]): void;
 }
 
 export function getMermaidConfig(
 	useObsidianTheme = true,
+	useElk = true,
+	useHandDrawn = false,
 ): Record<string, unknown> {
 	return {
 		startOnLoad: false,
 		securityLevel: "strict",
+		...(useElk ? { layout: "elk" } : {}),
+		...(useHandDrawn ? { look: "handDrawn" } : {}),
 		...(useObsidianTheme
 			? {}
 			: {
@@ -49,11 +55,11 @@ export interface MermaidDiskCache {
 	write(version: string, source: string): Promise<void>;
 }
 
-function initBundled(useObsidianTheme: boolean): MermaidAPI {
-	(mermaidBundled as unknown as MermaidAPI).initialize(
-		getMermaidConfig(useObsidianTheme),
-	);
-	return mermaidBundled as unknown as MermaidAPI;
+function initBundled(useObsidianTheme: boolean, useElk: boolean, useHandDrawn: boolean): MermaidAPI {
+	const mermaid = mermaidBundled as unknown as MermaidAPI;
+	mermaid.initialize(getMermaidConfig(useObsidianTheme, useElk, useHandDrawn));
+	mermaid.registerLayoutLoaders(elkLayoutLoaders);
+	return mermaid;
 }
 
 function cdnBaseUrl(version: string): string {
@@ -79,19 +85,21 @@ export async function getMermaid(
 	version = "latest",
 	source: "cdn" | "bundled" = "cdn",
 	useObsidianTheme = true,
+	useElk = true,
+	useHandDrawn = false,
 	cache?: MermaidDiskCache,
 ): Promise<MermaidAPI> {
 	const cacheKey =
 		source === "bundled"
-			? `bundled:${useObsidianTheme}`
-			: `cdn:${version}:${useObsidianTheme}`;
+			? `bundled:${useObsidianTheme}:${useElk}:${useHandDrawn}`
+			: `cdn:${version}:${useObsidianTheme}:${useElk}:${useHandDrawn}`;
 
 	if (mermaidCache[cacheKey]) return mermaidCache[cacheKey];
 	mermaidCache = {};
 
 	if (source === "bundled") {
 		return (mermaidCache[cacheKey] = Promise.resolve(
-			initBundled(useObsidianTheme),
+			initBundled(useObsidianTheme, useElk, useHandDrawn),
 		));
 	}
 
@@ -100,7 +108,7 @@ export async function getMermaid(
 	// disk after the user manually fetches via settings.
 	const diskCached = (await cache?.read(version)) ?? null;
 	if (diskCached === null) {
-		return initBundled(useObsidianTheme);
+		return initBundled(useObsidianTheme, useElk, useHandDrawn);
 	}
 
 	mermaidCache[cacheKey] = (async () => {
@@ -118,14 +126,15 @@ export async function getMermaid(
 			} finally {
 				URL.revokeObjectURL(blobUrl);
 			}
-			mermaid.initialize(getMermaidConfig(useObsidianTheme));
+			mermaid.initialize(getMermaidConfig(useObsidianTheme, useElk, useHandDrawn));
+			mermaid.registerLayoutLoaders(elkLayoutLoaders);
 			return mermaid;
 		} catch (err) {
 			console.warn(
 				`[Mermaid-next] Failed to load CDN version "${version}", falling back to bundled mermaid.`,
 				err,
 			);
-			return initBundled(useObsidianTheme);
+			return initBundled(useObsidianTheme, useElk, useHandDrawn);
 		}
 	})();
 

@@ -1,5 +1,12 @@
 
 ```mermaid-next
+---
+config:
+  layout: elk
+  look: handDrawn
+
+---
+
 sequenceDiagram
     participant Alice@{ type: "queue" }
     participant Bob
@@ -38,5 +45,14 @@ sequenceDiagram
     participant Bob
     Alice->>Bob: Queue message
     Bob->>Alice: Queue response
+
+```
+
+
+```mermaid-next
+flowchart TB
+  A[Start] --> B{Decision}
+  B -->|Yes| C[Continue]
+  B -->|No| D[Stop]
 
 ```

@@ -33,6 +33,8 @@ export default class MermaidNextPlugin extends Plugin {
 			this.cfg.version,
 			this.cfg.source,
 			this.cfg.useObsidianTheme,
+			this.cfg.useElk,
+			this.cfg.useHandDrawn,
 			this.diskCache,
 		);
 
@@ -43,6 +45,8 @@ export default class MermaidNextPlugin extends Plugin {
 					this.cfg.version,
 					this.cfg.source,
 					this.cfg.useObsidianTheme,
+					this.cfg.useElk,
+					this.cfg.useHandDrawn,
 					this.diskCache,
 				);
 				if (this.cfg.useObsidianTheme) {

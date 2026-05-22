@@ -81,7 +81,6 @@ export async function getMermaid(
 		return mermaidCache["__bundled__"];
 	}
 
-	console.debug(`[Mermaid-next] Requesting Mermaid version: ${version}`);
 	if (mermaidCache[version]) {
 		return mermaidCache[version];
 	}
@@ -97,7 +96,6 @@ export async function getMermaid(
 			const mermaid = mod.default;
 
 			mermaid.initialize(getMermaidConfig(useObsidianTheme));
-			console.debug(`[Mermaid-next] Loaded CDN version: ${version}`);
 			return mermaid;
 		} catch (err) {
 			console.warn(

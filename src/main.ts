@@ -15,8 +15,7 @@ export default class MermaidNextPlugin extends Plugin {
 			this.settings?.useObsidianTheme ?? DEFAULT_SETTINGS.useObsidianTheme,
 		);
 		this.app.workspace.onLayoutReady(() => {
-			console.debug('Obsidian layout is ready. Registering Mermaid code block processor.');
-				this.registerMarkdownCodeBlockProcessor(
+			this.registerMarkdownCodeBlockProcessor(
 					'mermaid-next',
 					async (source, el, _ctx) => {
 						if (this.settings?.useObsidianTheme ?? DEFAULT_SETTINGS.useObsidianTheme) {
@@ -44,7 +43,6 @@ export default class MermaidNextPlugin extends Plugin {
 
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<MermaidNextPluginSettings>);
-		console.debug('Settings loaded:', this.settings);
 	}
 
 	async saveSettings() {

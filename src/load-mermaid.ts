@@ -55,6 +55,9 @@ export function getMermaidConfig(useObsidianTheme = true): Record<string, unknow
 		pie: {
 			useMaxWidth: true,
 		},
+		mindmap: {
+			useMaxWidth: false,
+		},
 	};
 }
 

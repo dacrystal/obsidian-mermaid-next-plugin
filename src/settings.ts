@@ -8,6 +8,7 @@ export interface MermaidNextPluginSettings {
 	useObsidianTheme: boolean;
 	useElk: boolean;
 	useHandDrawn: boolean;
+	replaceObsidianMermaid: boolean;
 	cdnCache: { version: string; source: string } | null;
 }
 
@@ -17,6 +18,7 @@ export const DEFAULT_SETTINGS: MermaidNextPluginSettings = {
 	useObsidianTheme: true,
 	useElk: true,
 	useHandDrawn: false,
+	replaceObsidianMermaid: false,
 	cdnCache: null,
 };
 
@@ -185,6 +187,25 @@ export class MermaidNextSettingTab extends PluginSettingTab {
 							)
 							.onChange((value) => {
 								void this.save("useHandDrawn", value);
+							}),
+					);
+			})
+			.addSetting((set) => {
+				set.setName("Replace Obsidian's Mermaid")
+					.setDesc(
+						"Use this plugin's Mermaid for all built-in `mermaid` code blocks across Obsidian, not just `mermaid-next`. Note: enabling this may cause compatibility issues with other plugins that modify Mermaid or rely on Obsidian's built-in Mermaid.",
+					)
+					.addToggle((toggle) =>
+						toggle
+							.setValue(
+								this.plugin.settings?.replaceObsidianMermaid ??
+									DEFAULT_SETTINGS.replaceObsidianMermaid,
+							)
+							.onChange((value) => {
+								void this.save(
+									"replaceObsidianMermaid",
+									value,
+								).then(() => this.plugin.syncGlobal());
 							}),
 					);
 			});

@@ -5,7 +5,7 @@ import elkLayoutLoaders from "@mermaid-js/layout-elk";
 
 export const bundledMermaidVersion: string = mermaidPkg.version;
 
-interface MermaidAPI {
+export interface MermaidAPI {
 	initialize(config: Record<string, unknown>): void;
 	render(
 		id: string,

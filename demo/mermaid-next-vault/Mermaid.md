@@ -1,5 +1,5 @@
 
-```mermaid-next
+```mermaid
 ---
 config:
   layout: elk

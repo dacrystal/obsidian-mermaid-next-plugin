@@ -1,10 +1,22 @@
-import { Plugin } from "obsidian";
+import { loadMermaid, Plugin } from "obsidian";
 import {
 	DEFAULT_SETTINGS,
 	MermaidNextPluginSettings,
 	MermaidNextSettingTab,
 } from "./settings";
-import { createMermaidId, getMermaid, MermaidDiskCache } from "./load-mermaid";
+import {
+	createMermaidId,
+	getMermaid,
+	MermaidAPI,
+	MermaidDiskCache,
+} from "./load-mermaid";
+
+const OWNED_BY_NEXT = Symbol("mermaid-next.owned");
+
+type WindowWithMermaid = Window & {
+	mermaid?: MermaidAPI & { [OWNED_BY_NEXT]?: true };
+	obsidian_mermaid?: MermaidAPI;
+};
 
 export default class MermaidNextPlugin extends Plugin {
 	settings: MermaidNextPluginSettings | undefined;
@@ -25,6 +37,28 @@ export default class MermaidNextPlugin extends Plugin {
 		return this.settings ?? DEFAULT_SETTINGS;
 	}
 
+	async syncGlobal(): Promise<void> {
+		const win = window as WindowWithMermaid;
+		if (this.cfg.replaceObsidianMermaid) {
+			if (!win.mermaid?.[OWNED_BY_NEXT]) {
+				win.obsidian_mermaid = win.mermaid;
+			}
+			win.mermaid = await getMermaid(
+				this.cfg.version,
+				this.cfg.source,
+				this.cfg.useObsidianTheme,
+				this.cfg.useElk,
+				this.cfg.useHandDrawn,
+				this.diskCache,
+			);
+			win.mermaid[OWNED_BY_NEXT] = true;
+		} else {
+			win.mermaid =
+				win.obsidian_mermaid ??
+				((await loadMermaid()) as MermaidAPI);
+		}
+	}
+
 	async onload() {
 		await this.loadSettings();
 		this.addSettingTab(new MermaidNextSettingTab(this.app, this));
@@ -37,6 +71,7 @@ export default class MermaidNextPlugin extends Plugin {
 			this.cfg.useHandDrawn,
 			this.diskCache,
 		);
+		await this.syncGlobal();
 
 		this.registerMarkdownCodeBlockProcessor(
 			"mermaid-next",
@@ -49,6 +84,7 @@ export default class MermaidNextPlugin extends Plugin {
 					this.cfg.useHandDrawn,
 					this.diskCache,
 				);
+				void this.syncGlobal();
 				if (this.cfg.useObsidianTheme) {
 					el.removeClass("mermaid");
 					el.addClass("mermaid");
@@ -89,7 +125,12 @@ export default class MermaidNextPlugin extends Plugin {
 		);
 	}
 
-	onunload() {}
+	onunload() {
+		const win = window as WindowWithMermaid;
+		if (win.obsidian_mermaid) {
+			win.mermaid = win.obsidian_mermaid;
+		}
+	}
 
 	async loadSettings() {
 		this.settings = Object.assign(

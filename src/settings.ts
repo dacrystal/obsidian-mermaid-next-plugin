@@ -40,7 +40,7 @@ export class MermaidNextSettingTab extends PluginSettingTab {
 			.addSetting(set =>
 				set
 				.setName('Source')
-				.setDesc('CDN: enter a version or "latest". Bundled: offline, fixed version. Reload after changing.')
+				.setDesc('CDN: enter a version or "latest". Bundled: offline, fixed version.')
 				.addDropdown(drop => drop
 					.addOption('cdn', 'CDN')
 					.addOption('bundled', 'Bundled')
@@ -91,7 +91,7 @@ export class MermaidNextSettingTab extends PluginSettingTab {
 			.addSetting(set => 
 				set
 				.setName('Obsidian theme integration')
-				.setDesc('When enabled, diagrams follow the active Obsidian theme. When disabled, Mermaid uses its "default" theme. Reload after changing.')
+				.setDesc('When enabled, diagrams follow the active Obsidian theme. When disabled, Mermaid uses its "default" theme.')
 				.addToggle(toggle => toggle
 					.setValue(this.plugin.settings?.useObsidianTheme ?? DEFAULT_SETTINGS.useObsidianTheme)
 					.onChange(async (value) => {

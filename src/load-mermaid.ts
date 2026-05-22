@@ -12,17 +12,14 @@ interface MermaidAPI {
 }
 
 export function getMermaidConfig(useObsidianTheme = true): Record<string, unknown> {
-	const s = getComputedStyle(document.body);
-	const v = (name: string) => s.getPropertyValue(name).trim();
-
 	return {
 		startOnLoad: false,
 		securityLevel: "strict",
 		...(useObsidianTheme ? {} : {
 			theme: "default",
 			themeVariables: {
-				textColor: v("--text-normal"),
-				fontFamily: v("--font-mermaid") || "ui-sans-serif, sans-serif",
+				textColor: "var(--text-normal)",
+				fontFamily: "var(--font-mermaid)",
 			},
 		}),
 		flowchart: {
@@ -31,7 +28,7 @@ export function getMermaidConfig(useObsidianTheme = true): Record<string, unknow
 		sequence: {
 			useMaxWidth: false,
 		},
-		gantt: {
+		gantt: { // cspell:ignore gantt
 			useMaxWidth: true,
 			axisFormatter: [
 				[
@@ -74,9 +71,16 @@ export async function getMermaid(
 	useObsidianTheme = true,
 	cache?: MermaidDiskCache,
 ): Promise<MermaidAPI> {
+	const cacheKey = source === "bundled"
+		? `bundled:${useObsidianTheme}`
+		: `cdn:${version}:${useObsidianTheme}`;
+
+	console.debug(`[Mermaid-next] getMermaid called — key: "${cacheKey}", hit: ${!!mermaidCache[cacheKey]}`);
+
 	if (source === "bundled") {
-		if (mermaidCache["__bundled__"]) return mermaidCache["__bundled__"];
-		mermaidCache["__bundled__"] = Promise.resolve(
+		if (mermaidCache[cacheKey]) return mermaidCache[cacheKey];
+		console.debug(`[Mermaid-next] Initializing bundled Mermaid (useObsidianTheme=${useObsidianTheme}).`);
+		mermaidCache[cacheKey] = Promise.resolve(
 			(() => {
 				(mermaidBundled as unknown as MermaidAPI).initialize(
 					getMermaidConfig(useObsidianTheme),
@@ -84,14 +88,14 @@ export async function getMermaid(
 				return mermaidBundled as unknown as MermaidAPI;
 			})(),
 		);
-		return mermaidCache["__bundled__"];
+		return mermaidCache[cacheKey];
 	}
 
-	if (mermaidCache[version]) {
-		return mermaidCache[version];
+	if (mermaidCache[cacheKey]) {
+		return mermaidCache[cacheKey];
 	}
 
-	mermaidCache[version] = (async () => {
+	mermaidCache[cacheKey] = (async () => {
 		try {
 			const url =
 				version === "latest"
@@ -143,7 +147,7 @@ export async function getMermaid(
 		}
 	})();
 
-	return mermaidCache[version];
+	return mermaidCache[cacheKey];
 }
 
 export function createMermaidId(prefix = "mermaid") {

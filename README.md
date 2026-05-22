@@ -66,10 +66,11 @@ Changes apply on the next render — no plugin reload required.
 | **Obsidian theme integration** | on | When enabled, diagrams follow the active Obsidian theme. When disabled, Mermaid uses its `default` theme. |
 | **ELK layout engine** | on | Uses [ELK](https://github.com/eclipse/elk) as the default layout engine. Produces better results for complex flowcharts. |
 | **Hand-drawn look** | off | Renders diagrams with a sketched, hand-drawn style. |
+| **Replace Obsidian's Mermaid** | off | Swaps `window.mermaid` so all built-in ` ```mermaid``` ` blocks across Obsidian also use this plugin's version. May conflict with other plugins that modify Mermaid. |
 
 ## Scope
 
-This plugin does one thing: render `mermaid-next` code blocks with a current version of Mermaid. No additional features are planned. This scope is intentional — keeping it narrow means low maintenance and long-term stability.
+This plugin's core job: render `mermaid-next` code blocks with a current version of Mermaid. An opt-in setting extends that coverage to plain `mermaid` blocks too (see Settings). No further features are planned. This narrow scope is intentional — low maintenance, long-term stability.
 
 ## Maintainer
 

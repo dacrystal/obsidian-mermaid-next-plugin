@@ -1,4 +1,20 @@
 
+```mermaid-next
+---
+config:
+  layout: elk
+  look: handDrawn
+
+---
+
+sequenceDiagram
+    participant Alice@{ type: "queue" }
+    participant Bob
+    Alice->>Bob: Queue message
+    Bob->>Alice: Queue response
+
+```
+
 ```mermaid
 ---
 config:
@@ -38,15 +54,6 @@ mindmap
 
 ```
 
-
-```mermaid
-sequenceDiagram
-    participant Alice
-    participant Bob
-    Alice->>Bob: Queue message
-    Bob->>Alice: Queue response
-
-```
 
 
 ```mermaid-next

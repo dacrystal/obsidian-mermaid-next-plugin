@@ -5,11 +5,13 @@ import {bundledMermaidVersion} from "./load-mermaid";
 export interface MermaidNextPluginSettings {
 	version: string;
 	source: 'cdn' | 'bundled';
+	useObsidianTheme: boolean;
 }
 
 export const DEFAULT_SETTINGS: MermaidNextPluginSettings = {
 	version: 'latest',
 	source: 'cdn',
+	useObsidianTheme: true,
 }
 
 export class MermaidNextSettingTab extends PluginSettingTab {
@@ -59,6 +61,20 @@ export class MermaidNextSettingTab extends PluginSettingTab {
 
 		const isBundled = (this.plugin.settings?.source ?? DEFAULT_SETTINGS.source) === 'bundled';
 		versionSetting.setDisabled(isBundled);
+
+		new Setting(containerEl)
+			.setName('Obsidian theme integration')
+			.setDesc('Add the .mermaid CSS class to diagrams so Obsidian\'s theme can style them. When disabled, Mermaid uses its own theme variables. Reload the plugin after changing.')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings?.useObsidianTheme ?? DEFAULT_SETTINGS.useObsidianTheme)
+				.onChange(async (value) => {
+					if (!this.plugin.settings) {
+						this.plugin.settings = { ...DEFAULT_SETTINGS, useObsidianTheme: value };
+					} else {
+						this.plugin.settings.useObsidianTheme = value;
+					}
+					await this.plugin.saveSettings();
+				}));
 
 		new Setting(containerEl)
 			.setName('Bundled version')

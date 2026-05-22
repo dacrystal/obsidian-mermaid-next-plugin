@@ -11,32 +11,20 @@ interface MermaidAPI {
 	): Promise<{ svg: string; bindFunctions?: (el: Element) => void }>;
 }
 
-export function getMermaidConfig(): Record<string, unknown> {
-	// const isDark = document.body.classList.contains("theme-dark");
+export function getMermaidConfig(useObsidianTheme = true): Record<string, unknown> {
 	const s = getComputedStyle(document.body);
 	const v = (name: string) => s.getPropertyValue(name).trim();
 
 	return {
 		startOnLoad: false,
 		securityLevel: "strict",
-		theme: "default",
-		themeVariables: {
-			// background:          v('--background-primary'),
-			// mainBkg:             v('--background-secondary'),
-			// primaryColor:        v('--interactive-accent'),
-			// primaryTextColor:    isDark ? '#ffffff' : '#000000',
-			// primaryBorderColor:  v('--interactive-accent'),
-			// secondaryColor:      v('--background-secondary'),
-			// tertiaryColor:       v('--background-primary'),
-			// lineColor:           v('--text-muted'),
-			textColor: v("--text-normal"),
-			// nodeBorder:          v('--background-modifier-border'),
-			// clusterBkg:          v('--background-secondary'),
-			// titleColor:          v('--text-normal'),
-			// edgeLabelBackground: v('--background-secondary'),
-			// fontFamily:          v('--font-interface') || 'ui-sans-serif, sans-serif',
-			fontFamily: v("--font-mermaid") || "ui-sans-serif, sans-serif",
-		},
+		...(useObsidianTheme ? {} : {
+			theme: "default",
+			themeVariables: {
+				textColor: v("--text-normal"),
+				fontFamily: v("--font-mermaid") || "ui-sans-serif, sans-serif",
+			},
+		}),
 		flowchart: {
 			useMaxWidth: false,
 		},
@@ -78,13 +66,14 @@ let mermaidCache: Record<string, Promise<MermaidAPI>> = {};
 export async function getMermaid(
 	version = "latest",
 	source: "cdn" | "bundled" = "cdn",
+	useObsidianTheme = true,
 ): Promise<MermaidAPI> {
 	if (source === "bundled") {
 		if (mermaidCache["__bundled__"]) return mermaidCache["__bundled__"];
 		mermaidCache["__bundled__"] = Promise.resolve(
 			(() => {
 				(mermaidBundled as unknown as MermaidAPI).initialize(
-					getMermaidConfig(),
+					getMermaidConfig(useObsidianTheme),
 				);
 				return mermaidBundled as unknown as MermaidAPI;
 			})(),
@@ -107,7 +96,7 @@ export async function getMermaid(
 			const mod = await import(/* @vite-ignore */ url) as { default: MermaidAPI };
 			const mermaid = mod.default;
 
-			mermaid.initialize(getMermaidConfig());
+			mermaid.initialize(getMermaidConfig(useObsidianTheme));
 			console.debug(`[Mermaid-next] Loaded CDN version: ${version}`);
 			return mermaid;
 		} catch (err) {
@@ -116,7 +105,7 @@ export async function getMermaid(
 				err,
 			);
 			(mermaidBundled as unknown as MermaidAPI).initialize(
-				getMermaidConfig(),
+				getMermaidConfig(useObsidianTheme),
 			);
 			return mermaidBundled as unknown as MermaidAPI;
 		}

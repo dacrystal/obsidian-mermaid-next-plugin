@@ -1,7 +1,7 @@
 {
 	"id": "mermaid-next",
 	"name": "Mermaid Next",
-	"version": "1.1.0",
+	"version": "1.2.0",
 	"minAppVersion": "0.15.0",
 	"description": "Renders Mermaid diagrams using the latest version, independent of the built-in bundled version.",
 	"author": "Nasser Alansari",

@@ -13,6 +13,17 @@ export default class MermaidNextPlugin extends Plugin {
 			this.settings?.version ?? DEFAULT_SETTINGS.version,
 			this.settings?.source ?? DEFAULT_SETTINGS.source,
 			this.settings?.useObsidianTheme ?? DEFAULT_SETTINGS.useObsidianTheme,
+			{
+				read: async (v) =>
+					this.settings?.cdnCache?.version === v
+						? this.settings!.cdnCache!.source
+						: null,
+				write: async (v, src) => {
+					if (!this.settings) return;
+					this.settings.cdnCache = { version: v, source: src };
+					await this.saveSettings();
+				},
+			},
 		);
 		this.app.workspace.onLayoutReady(() => {
 			this.registerMarkdownCodeBlockProcessor(

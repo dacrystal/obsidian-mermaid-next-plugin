@@ -61,12 +61,18 @@ export function getMermaidConfig(useObsidianTheme = true): Record<string, unknow
 	};
 }
 
+export interface MermaidDiskCache {
+	read(version: string): Promise<string | null>;
+	write(version: string, source: string): Promise<void>;
+}
+
 let mermaidCache: Record<string, Promise<MermaidAPI>> = {};
 
 export async function getMermaid(
 	version = "latest",
 	source: "cdn" | "bundled" = "cdn",
 	useObsidianTheme = true,
+	cache?: MermaidDiskCache,
 ): Promise<MermaidAPI> {
 	if (source === "bundled") {
 		if (mermaidCache["__bundled__"]) return mermaidCache["__bundled__"];
@@ -92,9 +98,37 @@ export async function getMermaid(
 					? "https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.esm.min.mjs"
 					: `https://cdn.jsdelivr.net/npm/mermaid@${version}/dist/mermaid.esm.min.mjs`;
 
-			const mod = await import(/* @vite-ignore */ url) as { default: MermaidAPI };
-			const mermaid = mod.default;
+			const cached = await cache?.read(version) ?? null;
+			let sourceText: string;
+			if (cached !== null) {
+				console.debug(`[Mermaid-next] Loaded v${version} from local cache.`);
+				sourceText = cached;
+			} else {
+				console.debug(`[Mermaid-next] Fetching v${version} from CDN.`);
+				// Rewrite relative chunk imports to absolute CDN URLs so the
+				// source can be imported via a blob URL (which has no base).
+				const baseUrl =
+					version === "latest"
+						? "https://cdn.jsdelivr.net/npm/mermaid/dist/"
+						: `https://cdn.jsdelivr.net/npm/mermaid@${version}/dist/`;
+				const raw = await fetch(url).then(r => r.text());
+				sourceText = raw.replace(
+					/(['"])(\.\/[^'"]+)\1/g,
+					(_, q, path) => `${q}${baseUrl}${path.slice(2)}${q}`,
+				);
+			}
 
+			const blob = new Blob([sourceText], { type: 'application/javascript' });
+			const blobUrl = URL.createObjectURL(blob);
+			let mermaid: MermaidAPI;
+			try {
+				const mod = await import(/* @vite-ignore */ blobUrl) as { default: MermaidAPI };
+				mermaid = mod.default;
+			} finally {
+				URL.revokeObjectURL(blobUrl);
+			}
+
+			if (!cached) await cache?.write(version, sourceText);
 			mermaid.initialize(getMermaidConfig(useObsidianTheme));
 			return mermaid;
 		} catch (err) {

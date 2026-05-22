@@ -6,12 +6,14 @@ export interface MermaidNextPluginSettings {
 	version: string;
 	source: 'cdn' | 'bundled';
 	useObsidianTheme: boolean;
+	cdnCache: { version: string; source: string } | null;
 }
 
 export const DEFAULT_SETTINGS: MermaidNextPluginSettings = {
 	version: 'latest',
 	source: 'cdn',
 	useObsidianTheme: true,
+	cdnCache: null,
 }
 
 export class MermaidNextSettingTab extends PluginSettingTab {
@@ -74,6 +76,20 @@ export class MermaidNextSettingTab extends PluginSettingTab {
 						this.plugin.settings.useObsidianTheme = value;
 					}
 					await this.plugin.saveSettings();
+				}));
+
+		const cache = this.plugin.settings?.cdnCache ?? null;
+		new Setting(containerEl)
+			.setName('CDN cache')
+			.setDesc(cache ? `Cached: v${cache.version}` : 'No cache')
+			.addButton(btn => btn
+				.setButtonText('Clear')
+				.setDisabled(!cache)
+				.onClick(async () => {
+					if (!this.plugin.settings) return;
+					this.plugin.settings.cdnCache = null;
+					await this.plugin.saveSettings();
+					this.display();
 				}));
 
 		new Setting(containerEl)

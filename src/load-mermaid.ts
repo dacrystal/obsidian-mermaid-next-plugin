@@ -80,8 +80,6 @@ export async function getMermaid(
 		? `bundled:${useObsidianTheme}`
 		: `cdn:${version}:${useObsidianTheme}`;
 
-	console.debug(`[Mermaid-next] getMermaid — key: "${cacheKey}", hit: ${!!mermaidCache[cacheKey]}`);
-
 	if (mermaidCache[cacheKey]) return mermaidCache[cacheKey];
 	mermaidCache = {};
 
@@ -99,10 +97,10 @@ export async function getMermaid(
 			const cached = await cache?.read(version) ?? null;
 			let sourceText: string;
 			if (cached !== null) {
-				console.debug(`[Mermaid-next] Loaded v${version} from local cache.`);
+				console.debug(`[Mermaid-next] Loaded ${version} from local cache.`);
 				sourceText = cached;
 			} else {
-				console.debug(`[Mermaid-next] Fetching v${version} from CDN.`);
+				console.debug(`[Mermaid-next] Fetching ${version} from CDN.`);
 				const raw = await fetch(url).then(r => r.text());
 				// Rewrite relative chunk imports to absolute CDN URLs so the
 				// source can be imported via a blob URL (which has no base).

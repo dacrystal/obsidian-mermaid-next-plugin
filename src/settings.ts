@@ -24,6 +24,11 @@ export class MermaidNextSettingTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
+	private async save<K extends keyof MermaidNextPluginSettings>(key: K, value: MermaidNextPluginSettings[K]): Promise<void> {
+		this.plugin.settings![key] = value;
+		await this.plugin.saveSettings();
+	}
+
 	display(): void {
 		const {containerEl} = this;
 		containerEl.empty();
@@ -46,12 +51,7 @@ export class MermaidNextSettingTab extends PluginSettingTab {
 					.addOption('bundled', 'Bundled')
 					.setValue(this.plugin.settings?.source ?? DEFAULT_SETTINGS.source)
 					.onChange(async (value) => {
-						if (!this.plugin.settings) {
-							this.plugin.settings = { ...DEFAULT_SETTINGS, source: value as 'cdn' | 'bundled' };
-						} else {
-							this.plugin.settings.source = value as 'cdn' | 'bundled';
-						}
-						await this.plugin.saveSettings();
+						await this.save('source', value as 'cdn' | 'bundled');
 						this.display();
 					}))
 				.addText(text => {
@@ -63,12 +63,7 @@ export class MermaidNextSettingTab extends PluginSettingTab {
 						.setDisabled(isBundled);
 					if (!isBundled) {
 						text.onChange(async (value) => {
-							if (!this.plugin.settings) {
-								this.plugin.settings = { ...DEFAULT_SETTINGS, version: value };
-							} else {
-								this.plugin.settings.version = value || DEFAULT_SETTINGS.version;
-							}
-							await this.plugin.saveSettings();
+							await this.save('version', value || DEFAULT_SETTINGS.version);
 						});
 					}
 				}))
@@ -80,9 +75,7 @@ export class MermaidNextSettingTab extends PluginSettingTab {
 					.setButtonText('Clear cache')
 					.setDisabled(!cache)
 					.onClick(async () => {
-						if (!this.plugin.settings) return;
-						this.plugin.settings.cdnCache = null;
-						await this.plugin.saveSettings();
+						await this.save('cdnCache', null);
 						this.display();
 					})))
 
@@ -95,12 +88,7 @@ export class MermaidNextSettingTab extends PluginSettingTab {
 				.addToggle(toggle => toggle
 					.setValue(this.plugin.settings?.useObsidianTheme ?? DEFAULT_SETTINGS.useObsidianTheme)
 					.onChange(async (value) => {
-						if (!this.plugin.settings) {
-							this.plugin.settings = { ...DEFAULT_SETTINGS, useObsidianTheme: value };
-						} else {
-							this.plugin.settings.useObsidianTheme = value;
-						}
-						await this.plugin.saveSettings();
+						await this.save('useObsidianTheme', value);
 					})));
 	}
 }

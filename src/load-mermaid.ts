@@ -63,6 +63,11 @@ export interface MermaidDiskCache {
 	write(version: string, source: string): Promise<void>;
 }
 
+function initBundled(useObsidianTheme: boolean): MermaidAPI {
+	(mermaidBundled as unknown as MermaidAPI).initialize(getMermaidConfig(useObsidianTheme));
+	return mermaidBundled as unknown as MermaidAPI;
+}
+
 let mermaidCache: Record<string, Promise<MermaidAPI>> = {};
 
 export async function getMermaid(
@@ -75,33 +80,22 @@ export async function getMermaid(
 		? `bundled:${useObsidianTheme}`
 		: `cdn:${version}:${useObsidianTheme}`;
 
-	console.debug(`[Mermaid-next] getMermaid called — key: "${cacheKey}", hit: ${!!mermaidCache[cacheKey]}`);
+	console.debug(`[Mermaid-next] getMermaid — key: "${cacheKey}", hit: ${!!mermaidCache[cacheKey]}`);
+
+	if (mermaidCache[cacheKey]) return mermaidCache[cacheKey];
+	mermaidCache = {};
 
 	if (source === "bundled") {
-		if (mermaidCache[cacheKey]) return mermaidCache[cacheKey];
-		console.debug(`[Mermaid-next] Initializing bundled Mermaid (useObsidianTheme=${useObsidianTheme}).`);
-		mermaidCache[cacheKey] = Promise.resolve(
-			(() => {
-				(mermaidBundled as unknown as MermaidAPI).initialize(
-					getMermaidConfig(useObsidianTheme),
-				);
-				return mermaidBundled as unknown as MermaidAPI;
-			})(),
-		);
-		return mermaidCache[cacheKey];
+		return mermaidCache[cacheKey] = Promise.resolve(initBundled(useObsidianTheme));
 	}
 
-	if (mermaidCache[cacheKey]) {
-		return mermaidCache[cacheKey];
-	}
+	const baseUrl = version === "latest"
+		? "https://cdn.jsdelivr.net/npm/mermaid/dist/"
+		: `https://cdn.jsdelivr.net/npm/mermaid@${version}/dist/`;
+	const url = `${baseUrl}mermaid.esm.min.mjs`;
 
 	mermaidCache[cacheKey] = (async () => {
 		try {
-			const url =
-				version === "latest"
-					? "https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.esm.min.mjs"
-					: `https://cdn.jsdelivr.net/npm/mermaid@${version}/dist/mermaid.esm.min.mjs`;
-
 			const cached = await cache?.read(version) ?? null;
 			let sourceText: string;
 			if (cached !== null) {
@@ -109,13 +103,9 @@ export async function getMermaid(
 				sourceText = cached;
 			} else {
 				console.debug(`[Mermaid-next] Fetching v${version} from CDN.`);
+				const raw = await fetch(url).then(r => r.text());
 				// Rewrite relative chunk imports to absolute CDN URLs so the
 				// source can be imported via a blob URL (which has no base).
-				const baseUrl =
-					version === "latest"
-						? "https://cdn.jsdelivr.net/npm/mermaid/dist/"
-						: `https://cdn.jsdelivr.net/npm/mermaid@${version}/dist/`;
-				const raw = await fetch(url).then(r => r.text());
 				sourceText = raw.replace(
 					/(['"])(\.\/[^'"]+)\1/g,
 					(_, q, path) => `${q}${baseUrl}${path.slice(2)}${q}`,
@@ -140,10 +130,7 @@ export async function getMermaid(
 				`[Mermaid-next] Failed to load CDN version "${version}", falling back to bundled mermaid.`,
 				err,
 			);
-			(mermaidBundled as unknown as MermaidAPI).initialize(
-				getMermaidConfig(useObsidianTheme),
-			);
-			return mermaidBundled as unknown as MermaidAPI;
+			return initBundled(useObsidianTheme);
 		}
 	})();
 

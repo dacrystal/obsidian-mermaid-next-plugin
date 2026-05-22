@@ -5,6 +5,10 @@ import {createMermaidId, getMermaid} from "./load-mermaid";
 export default class MermaidNextPlugin extends Plugin {
 	settings: MermaidNextPluginSettings | undefined;
 
+	private get cfg(): MermaidNextPluginSettings {
+		return this.settings ?? DEFAULT_SETTINGS;
+	}
+
 	async onload() {
 		await this.loadSettings();
 		this.addSettingTab(new MermaidNextSettingTab(this.app, this));
@@ -21,24 +25,13 @@ export default class MermaidNextPlugin extends Plugin {
 			},
 		};
 
-		await getMermaid(
-			this.settings?.version ?? DEFAULT_SETTINGS.version,
-			this.settings?.source ?? DEFAULT_SETTINGS.source,
-			this.settings?.useObsidianTheme ?? DEFAULT_SETTINGS.useObsidianTheme,
-			diskCache,
-		);
+		await getMermaid(this.cfg.version, this.cfg.source, this.cfg.useObsidianTheme, diskCache);
 
 		this.registerMarkdownCodeBlockProcessor(
 			'mermaid-next',
 			async (source, el, _ctx) => {
-			
-				const mermaid = await getMermaid(
-					this.settings?.version ?? DEFAULT_SETTINGS.version,
-					this.settings?.source ?? DEFAULT_SETTINGS.source,
-					this.settings?.useObsidianTheme ?? DEFAULT_SETTINGS.useObsidianTheme,
-					diskCache,
-				);
-				if (this.settings?.useObsidianTheme ?? DEFAULT_SETTINGS.useObsidianTheme) {
+				const mermaid = await getMermaid(this.cfg.version, this.cfg.source, this.cfg.useObsidianTheme, diskCache);
+				if (this.cfg.useObsidianTheme) {
 					el.removeClass('mermaid');
 					el.addClass('mermaid');
 				} else {

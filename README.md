@@ -1,23 +1,46 @@
-# Mermaid Next Plugin
+# Mermaid Next _(obsidian plugin)_
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Obsidian](https://img.shields.io/badge/Obsidian-%3E%3D0.15.0-7c3aed)](https://obsidian.md)
 
-An [Obsidian](https://obsidian.md) plugin that renders Mermaid diagrams using the latest version of Mermaid — independent of whatever version Obsidian ships with.
+Renders Mermaid diagrams using the latest version, independent of the built-in bundled version.
 
-## Why
+An [Obsidian](https://obsidian.md) plugin that registers a `mermaid-next` code block and renders it with a current build of [Mermaid](https://mermaid.js.org), sourced either from a bundled copy or from the jsDelivr CDN.
 
-Obsidian bundles its own copy of Mermaid that lags behind upstream releases. New diagram types, syntax improvements, and bug fixes in Mermaid aren't available until Obsidian ships an update — which can take months.
+## Table of Contents
 
-This plugin solves that by loading Mermaid independently, so you always have access to the latest features.
+- [Background](#background)
+- [Install](#install)
+- [Usage](#usage)
+- [Settings](#settings)
+- [Scope](#scope)
+- [Maintainer](#maintainer)
+- [Contributing](#contributing)
+- [License](#license)
 
-## How it works
+## Background
 
-Use `mermaid-next` code blocks instead of `mermaid`.
+Obsidian bundles its own copy of Mermaid that lags behind upstream releases. New diagram types, syntax improvements, and bug fixes added to Mermaid aren't available in Obsidian until the next app update — which can take months.
 
-By default the plugin loads Mermaid from jsDelivr CDN. If the CDN is unreachable (offline use), it falls back to a bundled copy of Mermaid included in the plugin. Diagrams are automatically themed using Obsidian's active colour scheme, including support for light and dark mode.
+This plugin loads Mermaid independently of Obsidian, so new diagram features are usable as soon as Mermaid ships them.
+
+## Install
+
+### Community plugin store
+
+Search for **Mermaid Next** in Settings → Community plugins, then enable it.
+
+### Manual
+
+Copy `main.js`, `styles.css`, and `manifest.json` into your vault at `.obsidian/plugins/mermaid-next/`, then enable the plugin in Settings → Community plugins.
+
+### Dependencies
+
+None for end users — the bundled copy of Mermaid ships inside `main.js`. For development, see [Contributing](#contributing).
 
 ## Usage
+
+Use `mermaid-next` as the code block language:
 
 ````markdown
 ```mermaid-next
@@ -29,33 +52,46 @@ sequenceDiagram
 ```
 ````
 
-Any valid Mermaid syntax works — flowcharts, sequence diagrams, class diagrams, and more.
+Any valid Mermaid syntax works — flowcharts, sequence diagrams, class diagrams, mindmaps, and more.
 
 ## Settings
 
+Changes apply on the next render — no plugin reload required.
+
 | Setting | Default | Description |
 | --- | --- | --- |
-| **Mermaid source** | CDN | `CDN` loads the version from jsDelivr. `Bundled` uses the copy shipped with the plugin (works offline). |
-| **Mermaid version** | `latest` | CDN only. Use `latest` or pin a specific version like `11.4.1`. |
-
-> Reload the plugin (disable and re-enable) after changing these settings.
-
-## Installation
-
-### Community plugin store
-
-Search for **Mermaid Next Plugin** in Settings → Community plugins.
-
-### Manual
-
-Copy `main.js`, `styles.css`, and `manifest.json` to your vault at `.obsidian/plugins/mermaid-next/`.
+| **Source** | Bundled | `Bundled` uses the copy shipped with the plugin (offline, fixed version). `CDN` loads from jsDelivr. |
+| **Version** | `latest` | CDN only. Use `latest` or pin a specific version like `11.4.1`. |
+| **CDN cache** | empty | Manual `Download` button caches the selected CDN version locally for offline use. `Clear cache` removes it. |
+| **Obsidian theme integration** | on | When enabled, diagrams follow the active Obsidian theme. When disabled, Mermaid uses its `default` theme. |
+| **ELK layout engine** | on | Uses [ELK](https://github.com/eclipse/elk) as the default layout engine. Produces better results for complex flowcharts. |
+| **Hand-drawn look** | off | Renders diagrams with a sketched, hand-drawn style. |
 
 ## Scope
 
 This plugin does one thing: render `mermaid-next` code blocks with a current version of Mermaid. No additional features are planned. This scope is intentional — keeping it narrow means low maintenance and long-term stability.
 
-Bug fix PRs are welcome.
+## Maintainer
+
+- [Nasser Alansari](https://github.com/dacrystal)
+
+## Contributing
+
+Questions and bug reports: open an issue on [GitHub](https://github.com/dacrystal/obsidian-mermaid-next-plugin/issues).
+
+Bug fix PRs are welcome. Feature PRs that expand scope beyond rendering `mermaid-next` blocks are unlikely to be merged — see [Scope](#scope).
+
+Development:
+
+```sh
+bun install
+bun run dev    # watch build
+bun run build  # production build + typecheck
+bun run lint
+```
+
+No sign-off or CLA required.
 
 ## License
 
-[MIT](LICENSE) © 2026 Nasser Alansari
+[MIT](LICENSE) © Nasser Alansari

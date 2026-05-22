@@ -1,9 +1,21 @@
 import {Plugin} from 'obsidian';
 import {DEFAULT_SETTINGS, MermaidNextPluginSettings, MermaidNextSettingTab} from "./settings";
-import {createMermaidId, getMermaid} from "./load-mermaid";
+import {createMermaidId, getMermaid, MermaidDiskCache} from "./load-mermaid";
 
 export default class MermaidNextPlugin extends Plugin {
 	settings: MermaidNextPluginSettings | undefined;
+
+	diskCache: MermaidDiskCache = {
+		read: async (v: string) =>
+			this.settings?.cdnCache?.version === v
+				? this.settings!.cdnCache!.source
+				: null,
+		write: async (v: string, src: string) => {
+			if (!this.settings) return;
+			this.settings.cdnCache = { version: v, source: src };
+			await this.saveSettings();
+		},
+	};
 
 	private get cfg(): MermaidNextPluginSettings {
 		return this.settings ?? DEFAULT_SETTINGS;
@@ -13,24 +25,12 @@ export default class MermaidNextPlugin extends Plugin {
 		await this.loadSettings();
 		this.addSettingTab(new MermaidNextSettingTab(this.app, this));
 
-		const diskCache = {
-			read: async (v: string) =>
-				this.settings?.cdnCache?.version === v
-					? this.settings!.cdnCache!.source
-					: null,
-			write: async (v: string, src: string) => {
-				if (!this.settings) return;
-				this.settings.cdnCache = { version: v, source: src };
-				await this.saveSettings();
-			},
-		};
-
-		await getMermaid(this.cfg.version, this.cfg.source, this.cfg.useObsidianTheme, diskCache);
+		await getMermaid(this.cfg.version, this.cfg.source, this.cfg.useObsidianTheme, this.diskCache);
 
 		this.registerMarkdownCodeBlockProcessor(
 			'mermaid-next',
 			async (source, el, _ctx) => {
-				const mermaid = await getMermaid(this.cfg.version, this.cfg.source, this.cfg.useObsidianTheme, diskCache);
+				const mermaid = await getMermaid(this.cfg.version, this.cfg.source, this.cfg.useObsidianTheme, this.diskCache);
 				if (this.cfg.useObsidianTheme) {
 					el.removeClass('mermaid');
 					el.addClass('mermaid');

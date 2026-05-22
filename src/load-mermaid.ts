@@ -71,6 +71,47 @@ function initBundled(useObsidianTheme: boolean): MermaidAPI {
 	return mermaidBundled as unknown as MermaidAPI;
 }
 
+function cdnBaseUrl(version: string): string {
+	return version === "latest"
+		? "https://cdn.jsdelivr.net/npm/mermaid/dist/"
+		: `https://cdn.jsdelivr.net/npm/mermaid@${version}/dist/`;
+}
+
+export async function fetchCDNSource(
+	version: string,
+	onProgress: (loaded: number, total: number | null) => void,
+): Promise<string> {
+	const baseUrl = cdnBaseUrl(version);
+	const response = await fetch(`${baseUrl}mermaid.esm.min.mjs`);
+	if (!response.ok) throw new Error(`CDN fetch failed: ${response.status} ${response.statusText}`);
+
+	const totalHeader = response.headers.get('Content-Length');
+	const total = totalHeader ? parseInt(totalHeader) : null;
+	const reader = response.body!.getReader();
+	const chunks: Uint8Array[] = [];
+	let loaded = 0;
+
+	while (true) {
+		const { done, value } = await reader.read();
+		if (done) break;
+		chunks.push(value);
+		loaded += value.length;
+		onProgress(loaded, total);
+	}
+
+	const fullArray = new Uint8Array(loaded);
+	let offset = 0;
+	for (const chunk of chunks) { fullArray.set(chunk, offset); offset += chunk.length; }
+	const raw = new TextDecoder().decode(fullArray);
+
+	// Rewrite relative chunk imports to absolute CDN URLs so the source can be
+	// imported via a blob URL (which has no base).
+	return raw.replace(
+		/(['"])(\.\/[^'"]+)\1/g,
+		(_, q, path) => `${q}${baseUrl}${path.slice(2)}${q}`,
+	);
+}
+
 let mermaidCache: Record<string, Promise<MermaidAPI>> = {};
 
 export async function getMermaid(
@@ -90,30 +131,17 @@ export async function getMermaid(
 		return mermaidCache[cacheKey] = Promise.resolve(initBundled(useObsidianTheme));
 	}
 
-	const baseUrl = version === "latest"
-		? "https://cdn.jsdelivr.net/npm/mermaid/dist/"
-		: `https://cdn.jsdelivr.net/npm/mermaid@${version}/dist/`;
-	const url = `${baseUrl}mermaid.esm.min.mjs`;
+	// CDN: use disk cache only — no auto-fetch. If not cached, fall back to
+	// bundled without populating mermaidCache so the next render re-checks
+	// disk after the user manually fetches via settings.
+	const diskCached = await cache?.read(version) ?? null;
+	if (diskCached === null) {
+		return initBundled(useObsidianTheme);
+	}
 
 	mermaidCache[cacheKey] = (async () => {
 		try {
-			const cached = await cache?.read(version) ?? null;
-			let sourceText: string;
-			if (cached !== null) {
-				console.debug(`[Mermaid-next] Loaded ${version} from local cache.`);
-				sourceText = cached;
-			} else {
-				console.debug(`[Mermaid-next] Fetching ${version} from CDN.`);
-				const raw = await fetch(url).then(r => r.text());
-				// Rewrite relative chunk imports to absolute CDN URLs so the
-				// source can be imported via a blob URL (which has no base).
-				sourceText = raw.replace(
-					/(['"])(\.\/[^'"]+)\1/g,
-					(_, q, path) => `${q}${baseUrl}${path.slice(2)}${q}`,
-				);
-			}
-
-			const blob = new Blob([sourceText], { type: 'application/javascript' });
+			const blob = new Blob([diskCached], { type: 'application/javascript' });
 			const blobUrl = URL.createObjectURL(blob);
 			let mermaid: MermaidAPI;
 			try {
@@ -122,8 +150,6 @@ export async function getMermaid(
 			} finally {
 				URL.revokeObjectURL(blobUrl);
 			}
-
-			if (!cached) await cache?.write(version, sourceText);
 			mermaid.initialize(getMermaidConfig(useObsidianTheme));
 			return mermaid;
 		} catch (err) {

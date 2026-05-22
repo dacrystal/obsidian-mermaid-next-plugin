@@ -1,6 +1,6 @@
 import {App, PluginSettingTab, SettingGroup} from "obsidian";
 import MermaidNextPlugin from "./main";
-import {bundledMermaidVersion} from "./load-mermaid";
+import {bundledMermaidVersion, fetchCDNSource} from "./load-mermaid";
 
 export interface MermaidNextPluginSettings {
 	version: string;
@@ -11,7 +11,7 @@ export interface MermaidNextPluginSettings {
 
 export const DEFAULT_SETTINGS: MermaidNextPluginSettings = {
 	version: 'latest',
-	source: 'cdn',
+	source: 'bundled',
 	useObsidianTheme: true,
 	cdnCache: null,
 }
@@ -35,10 +35,7 @@ export class MermaidNextSettingTab extends PluginSettingTab {
 
 		const isBundled = (this.plugin.settings?.source ?? DEFAULT_SETTINGS.source) === 'bundled';
 		const cache = this.plugin.settings?.cdnCache ?? null;
-
-		const desc = cache
-				? `Cached: ${cache.version}`
-				: 'No local cache';
+		const version = this.plugin.settings?.version ?? DEFAULT_SETTINGS.version;
 
 		new SettingGroup(containerEl)
 		.setHeading('Mermaid')
@@ -67,21 +64,53 @@ export class MermaidNextSettingTab extends PluginSettingTab {
 						});
 					}
 				}))
-			.addSetting(set =>
+			.addSetting(set => {
 				set
 				.setName('CDN cache')
-				.setDesc(desc)
-				.addButton(btn => btn
-					.setButtonText('Clear cache')
-					.setDisabled(!cache)
-					.onClick(async () => {
-						await this.save('cdnCache', null);
-						this.display();
-					})))
+				.setDesc(cache ? `Cached: ${cache.version}` : 'No local cache');
+
+				if (cache) {
+					set.addButton(btn => btn
+						.setButtonText('Clear cache')
+						.onClick(async () => {
+							await this.save('cdnCache', null);
+							this.display();
+						}));
+				} else {
+					let progressEl: HTMLProgressElement;
+
+					set.addButton(btn => btn
+						.setButtonText('Fetch')
+						.setDisabled(isBundled)
+						.onClick(async () => {
+							btn.setDisabled(true);
+							progressEl.style.display = 'block';
+							try {
+								const source = await fetchCDNSource(version, (loaded, total) => {
+									if (total) {
+										progressEl.max = total;
+										progressEl.value = loaded;
+									} else {
+										progressEl.removeAttribute('value');
+									}
+								});
+								await this.plugin.diskCache.write(version, source);
+								this.display();
+							} catch (err) {
+								btn.setDisabled(false);
+								progressEl.style.display = 'none';
+								set.setDesc(`Fetch failed: ${err instanceof Error ? err.message : String(err)}`);
+							}
+						}));
+
+					progressEl = set.settingEl.createEl('progress');
+					progressEl.style.cssText = 'width:100%;display:none;margin-top:6px;';
+				}
+			})
 
 		new SettingGroup(containerEl)
 			.setHeading('Appearance')
-			.addSetting(set => 
+			.addSetting(set =>
 				set
 				.setName('Obsidian theme integration')
 				.setDesc('When enabled, diagrams follow the active Obsidian theme. When disabled, Mermaid uses its "default" theme.')

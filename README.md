@@ -61,7 +61,7 @@ Changes apply on the next render — no plugin reload required.
 | Setting | Default | Description |
 | --- | --- | --- |
 | **Source** | Bundled | `Bundled` uses the copy shipped with the plugin (offline, fixed version). `CDN` loads from jsDelivr. |
-| **Version** | `latest` | CDN only. Use `latest` or pin a specific version like `11.4.1`. |
+| **Version** | `latest` | CDN only. Use `latest` or pin a specific version like `11.15.0`. |
 | **CDN cache** | empty | Manual `Download` button caches the selected CDN version locally for offline use. `Clear cache` removes it. |
 | **Obsidian theme integration** | on | When enabled, diagrams follow the active Obsidian theme. When disabled, Mermaid uses its `default` theme. |
 | **ELK layout engine** | on | Uses [ELK](https://github.com/eclipse/elk) as the default layout engine. Produces better results for complex flowcharts. |

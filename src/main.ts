@@ -40,11 +40,13 @@ export default class MermaidNextPlugin extends Plugin {
 				try {
 					const { svg } = await mermaid.render(createMermaidId('mermaid-next'), source);
 					if (!svg?.trim()) throw new Error('Mermaid returned an empty diagram — check syntax or diagram type support.');
+					// Parse as HTML, not SVG/XML: mermaid's DOMPurify pass converts <br/> to <br>
+					// inside <foreignObject>, making the output invalid XML.
 					const parser = new DOMParser();
-					const svgDoc = parser.parseFromString(svg, 'image/svg+xml');
-					const root = svgDoc.documentElement;
-					if (root.tagName === 'parsererror') throw new Error(root.textContent ?? 'SVG parse error.');
-					el.replaceChildren(document.adoptNode(root));
+					const htmlDoc = parser.parseFromString(`<body>${svg}</body>`, 'text/html');
+					const svgEl = htmlDoc.querySelector('svg');
+					if (!svgEl) throw new Error('No SVG element found in mermaid output.');
+					el.replaceChildren(document.adoptNode(svgEl));
 				} catch (err) {
 					el.empty();
 					console.error('Error rendering Mermaid diagram:', err);

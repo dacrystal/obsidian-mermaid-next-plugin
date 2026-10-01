@@ -40,8 +40,9 @@ export default class MermaidNextPlugin extends Plugin {
 	async syncGlobal(): Promise<void> {
 		const win = window as WindowWithMermaid;
 		if (this.cfg.replaceObsidianMermaid) {
+			const obsidianMermaid = (await loadMermaid()) as MermaidAPI;
 			if (!win.mermaid?.[OWNED_BY_NEXT]) {
-				win.obsidian_mermaid = win.mermaid;
+				win.obsidian_mermaid = obsidianMermaid;
 			}
 			win.mermaid = await getMermaid(
 				this.cfg.version,
